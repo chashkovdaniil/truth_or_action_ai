@@ -34,7 +34,14 @@ class SettingsPage extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.all(4.0),
                         child: ActionChip.elevated(
-                          label: Text(characteristic.word),
+                          label: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(characteristic.word),
+                              const SizedBox(width: 4.0),
+                              Icon(Icons.close_rounded),
+                            ],
+                          ),
                           onPressed: () {
                             final oldValue = AppDi.of(context)!
                                 .questionCharacteristicsValueNotifier
@@ -92,23 +99,41 @@ class __EnterCharacteristicState extends State<_EnterCharacteristic> {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      focusNode: focusNode,
-      autofocus: true,
-      undoController: undoHistoryController,
-      controller: textController,
-      onSubmitted: (value) {
-        final word = value.trim();
-        textController.clear();
-        final valueNotifier =
-            AppDi.of(context)!.questionCharacteristicsValueNotifier;
-        final characteristics = valueNotifier.value;
-        valueNotifier.value = characteristics.copyWith(characteristics: [
-          ...characteristics.characteristics,
-          QuestionCharacteristic(word: word),
-        ]);
-        focusNode.requestFocus();
-      },
+    return Row(
+      children: [
+        Expanded(
+          child: TextField(
+            focusNode: focusNode,
+            autofocus: true,
+            undoController: undoHistoryController,
+            controller: textController,
+            onSubmitted: (_) {
+              submit();
+            },
+          ),
+        ),
+        IconButton(
+          icon: const Icon(
+            Icons.send_rounded,
+          ),
+          onPressed: () {
+            submit();
+          },
+        ),
+      ],
     );
+  }
+
+  void submit() {
+    final word = textController.value.text.trim();
+    textController.clear();
+    final valueNotifier =
+        AppDi.of(context)!.questionCharacteristicsValueNotifier;
+    final characteristics = valueNotifier.value;
+    valueNotifier.value = characteristics.copyWith(characteristics: [
+      ...characteristics.characteristics,
+      QuestionCharacteristic(word: word),
+    ]);
+    focusNode.requestFocus();
   }
 }

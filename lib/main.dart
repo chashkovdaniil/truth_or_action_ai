@@ -143,9 +143,11 @@ class _MyHomePageState extends State<MyHomePage> {
                     },
                   ),
                 ),
-                onPressed: () {
-                  _getQuestion();
-                },
+                onPressed: state == PageState.loading
+                    ? null
+                    : () {
+                        _getQuestion();
+                      },
               ),
             ),
           ],

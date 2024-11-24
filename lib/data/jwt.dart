@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
@@ -16,9 +15,7 @@ class AuthApi {
 
     final token = await _dio.post(
       'https://iam.api.cloud.yandex.net/iam/v1/tokens',
-      data: {
-        'jwt': jwtToken,
-      },
+      data: {'jwt': jwtToken},
       options: Options(
         headers: {
           HttpHeaders.contentTypeHeader: 'application/json',

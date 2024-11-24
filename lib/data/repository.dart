@@ -22,6 +22,7 @@ final class Repository implements QuestionsRepository {
   }) async {
     final result = await _yandexGPTApi.getQuestion(
       characteristics: characteristics ?? _characteristics,
+      history: await getQuestionsHistory(),
     );
     _history.add(result);
     return result;
