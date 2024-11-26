@@ -29,6 +29,7 @@ data class Response(
 
 @ExperimentalEncodingApi
 fun handle(request: Request): Response {
+    /// GPT_API_TOKEN - это переменная окружения, по сути это Api токен авторизации
     println("Request: $request");
     val gptApiToken: String = System.getenv("GPT_API_TOKEN");
     println("Token $gptApiToken");
