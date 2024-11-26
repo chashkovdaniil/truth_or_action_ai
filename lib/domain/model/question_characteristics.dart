@@ -8,7 +8,7 @@ part 'question_characteristics.g.dart';
 @freezed
 class QuestionCharacteristics with _$QuestionCharacteristics {
   static const _prompt =
-      "Игра \"правда или действие\". Придумай вопрос и в ответе укажи только его. Исключи из ответа название игры. Вопрос должен обладать такими характеристиками: ";
+      'Игра "правда или действие". Придумай вопрос и в ответе укажи только его. Исключи из ответа название игры. Вопрос должен обладать такими характеристиками: ';
 
   const QuestionCharacteristics._();
   const factory QuestionCharacteristics({

@@ -1,5 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:truth_or_action_ai/domain/model/model.dart';
+import 'model.dart';
 
 part 'question.freezed.dart';
 part 'question.g.dart';

@@ -1,5 +1,5 @@
-import 'package:truth_or_action_ai/data/api.dart';
-import 'package:truth_or_action_ai/domain/domain.dart';
+import 'api.dart';
+import '../domain/domain.dart';
 
 final class Repository implements QuestionsRepository {
   final YandexGPTApi _yandexGPTApi;

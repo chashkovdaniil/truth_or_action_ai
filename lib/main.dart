@@ -1,46 +1,48 @@
 import 'package:flutter/material.dart';
-import 'package:truth_or_action_ai/data/api.dart';
-import 'package:truth_or_action_ai/data/repository.dart';
-import 'package:truth_or_action_ai/domain/domain.dart';
-import 'package:truth_or_action_ai/ui/history.dart';
+import 'data/api.dart';
+import 'data/repository.dart';
+import 'domain/domain.dart';
+import 'ui/ui.dart';
 
-import 'ui/settings.dart';
-
-enum PageState {
-  idle,
-  loading,
-}
+import 'domain/notifier/value_notifier.dart';
 
 void main() {
   final yandexGPTApi = YandexGPTApi();
   final repository = Repository(yandexGPTApi: yandexGPTApi);
-  final useCase = GetQuestionUseCase(
-    questionsRepository: repository,
-  );
   final questionCharacteristicsValueNotifier =
       QuestionCharacteristicsValueNotifier();
+  final questionValueNotifier = QuestionValueNotifier();
+  final useCase = GetQuestionUseCase(
+    questionsRepository: repository,
+    questionValueNotifier: questionValueNotifier,
+    questionCharacteristicsValueNotifier: questionCharacteristicsValueNotifier,
+  );
 
   runApp(MyApp(
     useCase: useCase,
     valueNotifier: questionCharacteristicsValueNotifier,
+    questionValueNotifier: questionValueNotifier,
   ));
 }
 
 class MyApp extends StatelessWidget {
   final GetQuestionUseCase useCase;
   final QuestionCharacteristicsValueNotifier valueNotifier;
+  final QuestionValueNotifier questionValueNotifier;
+
   const MyApp({
     super.key,
     required this.useCase,
     required this.valueNotifier,
+    required this.questionValueNotifier,
   });
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return AppDi(
       getQuestionUseCase: useCase,
       questionCharacteristicsValueNotifier: valueNotifier,
+      questionValueNotifier: questionValueNotifier,
       child: MaterialApp(
         title: 'Узнай друга',
         theme: ThemeData(
@@ -55,42 +57,22 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class MyHomePage extends StatefulWidget {
+class MyHomePage extends StatelessWidget {
   final String title;
   const MyHomePage({super.key, required this.title});
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  String _question = 'Нажми на кнопку';
-  PageState state = PageState.idle;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text(title),
         centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.history),
-            onPressed: () async {
-              final history = await AppDi.of(context)
-                  ?.getQuestionUseCase
-                  .getQuestionsHistory();
-              if (history == null) {
-                return;
-              }
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => HistoryPage(
-                    history: history,
-                  ),
-                ),
-              );
-            },
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const HistoryPage()),
+            ),
           ),
         ],
       ),
@@ -99,89 +81,31 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Expanded(
-              child: Center(
-                child: Text(
-                  _question,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ElevatedButton(
-                child: const Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Text('Настройки'),
-                ),
-                onPressed: () {
-                  Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const SettingsPage()));
-                },
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: FilledButton(
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 500),
-                    child: state == PageState.idle
-                        ? const _GetQuestionButtonText()
-                        : const LinearProgressIndicator(),
-                    transitionBuilder: (child, animation) {
-                      return AnimatedSize(
-                        key: const ValueKey('get_question'),
-                        duration: const Duration(milliseconds: 500),
-                        child: AnimatedSwitcher.defaultTransitionBuilder(
-                          child,
-                          animation,
-                        ),
-                      );
-                    },
+            CurrentQuestionBuilder(
+              builder: (BuildContext context, Question question) => Expanded(
+                child: Center(
+                  child: Text(
+                    question.text,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.headlineSmall,
                   ),
                 ),
-                onPressed: state == PageState.loading
-                    ? null
-                    : () {
-                        _getQuestion();
-                      },
+              ),
+              nullBuilder: (BuildContext context) => Expanded(
+                child: Center(
+                  child: Text(
+                    'Нажми на кнопку',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                ),
               ),
             ),
+            const SettingsButton(),
+            const GetQuestionButton(),
           ],
         ),
       ),
-    );
-  }
-
-  void _getQuestion() async {
-    state = PageState.loading;
-    setState(() {});
-
-    final characteristics =
-        AppDi.of(context)!.questionCharacteristicsValueNotifier.value;
-    final data = await AppDi.of(context)?.getQuestionUseCase.getQuestion(
-          characteristics: characteristics,
-        );
-    _question = data?.text ?? '';
-    state = PageState.idle;
-
-    setState(() {});
-  }
-}
-
-class _GetQuestionButtonText extends StatelessWidget {
-  const _GetQuestionButtonText({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      'Придумай вопрос!',
-      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: Theme.of(context).scaffoldBackgroundColor,
-          ),
     );
   }
 }
@@ -190,12 +114,14 @@ class AppDi extends InheritedWidget {
   final GetQuestionUseCase getQuestionUseCase;
   final QuestionCharacteristicsValueNotifier
       questionCharacteristicsValueNotifier;
+  final QuestionValueNotifier questionValueNotifier;
 
   const AppDi({
     super.key,
     required super.child,
     required this.getQuestionUseCase,
     required this.questionCharacteristicsValueNotifier,
+    required this.questionValueNotifier,
   });
 
   @override
@@ -204,12 +130,6 @@ class AppDi extends InheritedWidget {
       questionCharacteristicsValueNotifier !=
           oldWidget.questionCharacteristicsValueNotifier;
 
-  static AppDi? of(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<AppDi>();
-}
-
-class QuestionCharacteristicsValueNotifier
-    extends ValueNotifier<QuestionCharacteristics> {
-  QuestionCharacteristicsValueNotifier()
-      : super(QuestionCharacteristics.defaultValue);
+  static AppDi of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<AppDi>()!;
 }

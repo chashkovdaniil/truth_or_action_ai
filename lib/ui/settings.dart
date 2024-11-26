@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:truth_or_action_ai/domain/model/model.dart';
-import 'package:truth_or_action_ai/main.dart';
+import '../domain/model/model.dart';
+import '../main.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    ;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Настройки'),
@@ -25,43 +24,18 @@ class SettingsPage extends StatelessWidget {
             ),
             ValueListenableBuilder(
               valueListenable:
-                  AppDi.of(context)!.questionCharacteristicsValueNotifier,
+                  AppDi.of(context).questionCharacteristicsValueNotifier,
               builder: (context, data, child) {
                 return Wrap(
                   direction: Axis.horizontal,
                   children: [
                     for (final characteristic in data.characteristics)
-                      Padding(
-                        padding: const EdgeInsets.all(4.0),
-                        child: ActionChip.elevated(
-                          label: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(characteristic.word),
-                              const SizedBox(width: 4.0),
-                              Icon(Icons.close_rounded),
-                            ],
-                          ),
-                          onPressed: () {
-                            final oldValue = AppDi.of(context)!
-                                .questionCharacteristicsValueNotifier
-                                .value;
-                            final newValue = oldValue.copyWith(
-                              characteristics: oldValue.characteristics.where(
-                                (c) => c.word != characteristic.word,
-                              ),
-                            );
-                            AppDi.of(context)!
-                                .questionCharacteristicsValueNotifier
-                                .value = newValue;
-                          },
-                        ),
-                      ),
+                      CharacteristicChip(characteristic: characteristic)
                   ],
                 );
               },
             ),
-            const _EnterCharacteristic(),
+            const _InputCharacteristic(),
           ],
         ),
       ),
@@ -69,14 +43,14 @@ class SettingsPage extends StatelessWidget {
   }
 }
 
-class _EnterCharacteristic extends StatefulWidget {
-  const _EnterCharacteristic({Key? key}) : super(key: key);
+class _InputCharacteristic extends StatefulWidget {
+  const _InputCharacteristic({Key? key}) : super(key: key);
 
   @override
-  __EnterCharacteristicState createState() => __EnterCharacteristicState();
+  _InputCharacteristicState createState() => _InputCharacteristicState();
 }
 
-class __EnterCharacteristicState extends State<_EnterCharacteristic> {
+class _InputCharacteristicState extends State<_InputCharacteristic> {
   late final TextEditingController textController;
   late final UndoHistoryController undoHistoryController;
   late final FocusNode focusNode;
@@ -113,12 +87,8 @@ class __EnterCharacteristicState extends State<_EnterCharacteristic> {
           ),
         ),
         IconButton(
-          icon: const Icon(
-            Icons.send_rounded,
-          ),
-          onPressed: () {
-            submit();
-          },
+          icon: const Icon(Icons.send_rounded),
+          onPressed: () => submit(),
         ),
       ],
     );
@@ -127,13 +97,54 @@ class __EnterCharacteristicState extends State<_EnterCharacteristic> {
   void submit() {
     final word = textController.value.text.trim();
     textController.clear();
+
     final valueNotifier =
-        AppDi.of(context)!.questionCharacteristicsValueNotifier;
-    final characteristics = valueNotifier.value;
-    valueNotifier.value = characteristics.copyWith(characteristics: [
-      ...characteristics.characteristics,
-      QuestionCharacteristic(word: word),
-    ]);
+        AppDi.of(context).questionCharacteristicsValueNotifier;
+    final characteristics = valueNotifier.value.characteristics.toList()
+      ..add(QuestionCharacteristic(word: word));
+
+    valueNotifier.value = valueNotifier.value.copyWith(
+      characteristics: characteristics,
+    );
+
     focusNode.requestFocus();
+  }
+}
+
+class CharacteristicChip extends StatelessWidget {
+  final QuestionCharacteristic characteristic;
+  const CharacteristicChip({
+    required this.characteristic,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(4.0),
+      child: ActionChip.elevated(
+        label: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(characteristic.word),
+            const SizedBox(width: 4.0),
+            const Icon(Icons.close_rounded),
+          ],
+        ),
+        onPressed: () {
+          final oldValue =
+              AppDi.of(context).questionCharacteristicsValueNotifier.value;
+          final newCharacteristics = oldValue.characteristics.where(
+            (c) => c.word != characteristic.word,
+          );
+          final newValue = oldValue.copyWith(
+            characteristics: newCharacteristics,
+          );
+
+          AppDi.of(context).questionCharacteristicsValueNotifier.value =
+              newValue;
+        },
+      ),
+    );
   }
 }

@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:dio/dio.dart';
 
+/// Используется для получения jwt токена.
+/// В коде не пришлось использовать в итоге, но реализацию на всякий случай оставил
 class AuthApi {
   final Dio _dio;
 
@@ -32,21 +34,23 @@ class AuthApi {
     const authCloseKey = String.fromEnvironment('AUTH_CLOSE_KEY');
     final jwtObject = JWT(
       {
-        "iss": const String.fromEnvironment('SERVICE_ID'),
-        "aud": "https://iam.api.cloud.yandex.net/iam/v1/tokens",
-        "iat": DateTime.now().millisecondsSinceEpoch,
-        "exp": DateTime.now().add(Duration(minutes: 40)).millisecondsSinceEpoch,
+        'iss': const String.fromEnvironment('SERVICE_ID'),
+        'aud': 'https://iam.api.cloud.yandex.net/iam/v1/tokens',
+        'iat': DateTime.now().millisecondsSinceEpoch,
+        'exp': DateTime.now()
+            .add(const Duration(minutes: 40))
+            .millisecondsSinceEpoch,
       },
       header: {
-        "typ": "jwt",
-        "alg": "PS256",
-        "kid": openKeyId,
+        'typ': 'jwt',
+        'alg': 'PS256',
+        'kid': openKeyId,
       },
     );
     return jwtObject.sign(
       RSAPrivateKey(authCloseKey.replaceAll('\\n', '\u000A')),
       algorithm: JWTAlgorithm.PS256,
-      expiresIn: Duration(minutes: 40),
+      expiresIn: const Duration(minutes: 40),
     );
   }
 }

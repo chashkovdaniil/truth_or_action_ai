@@ -1,4 +1,4 @@
-import 'package:truth_or_action_ai/domain/model/model.dart';
+import '../model/model.dart';
 
 abstract interface class QuestionsRepository {
   Future<QuestionsHistory> getQuestionsHistory();
